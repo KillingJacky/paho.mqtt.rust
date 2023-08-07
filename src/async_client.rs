@@ -436,6 +436,29 @@ impl AsyncClient {
         tok
     }
 
+    /// Starts connecting to an MQTT broker using the specified connect options.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` The connect options. This can be `None`, in which case the
+    ///          default options are used.
+    ///
+    pub fn start_connect<T>(&self, opts: T)
+    where
+        T: Into<Option<ConnectOptions>>,
+    {
+        debug!("Start connecting. Handle: {:?}", self.inner.handle);
+
+        let mut opts = opts.into().unwrap_or_default();
+        self.set_mqtt_version(opts.mqtt_version());
+
+        debug!("Connect options: {:?}", opts);
+        let mut lkopts = self.inner.opts.lock().unwrap();
+        *lkopts = opts;
+
+        let _ = unsafe { ffi::MQTTAsync_connect(self.inner.handle, &lkopts.copts) };
+    }
+
     /// Connects to an MQTT broker using the specified connect options.
     ///
     /// # Arguments
